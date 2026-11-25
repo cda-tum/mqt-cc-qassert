@@ -1,0 +1,45 @@
+Register QAssert in the MQT Core compiler
+
+Adds the QAssert dialect to the compiler context and links its library into
+the compiler programs target. The linked target is defined by the
+mqt-cc-qassert project, so this patch only builds inside it.
+
+Extend this patch when QAssert gains passes or conversions: register passes in
+`registerMQTCompilerPasses` (mlir/lib/Support/Passes.cpp) and conversions in
+the `compile` driver (mlir/tools/compile/Compile.cpp), and add the matching
+link lines.
+
+diff --git a/mlir/lib/Compiler/CMakeLists.txt b/mlir/lib/Compiler/CMakeLists.txt
+index 4604f28e6..b8c325d0d 100644
+--- a/mlir/lib/Compiler/CMakeLists.txt
++++ b/mlir/lib/Compiler/CMakeLists.txt
+@@ -92,6 +92,7 @@ add_mlir_library(
+   MQT::MLIRSupport
+   MLIRQCODialect
+   MLIRQCOUtils
++  MLIRQAssertDialect
+   MLIRQTensorDialect
+   MLIRSCFDialect
+   MLIRSupport
+diff --git a/mlir/lib/Compiler/Programs.cpp b/mlir/lib/Compiler/Programs.cpp
+index 85b4f72f1..dbbe6c73e 100644
+--- a/mlir/lib/Compiler/Programs.cpp
++++ b/mlir/lib/Compiler/Programs.cpp
+@@ -13,6 +13,7 @@
+ #include "mqt/Conversion/QCToQCO/QCToQCO.h"
+ #include "mqt/Dialect/CBit/IR/CBitDialect.h"
+ #include "mqt/Dialect/MQT/IR/MQTDialect.h"
++#include "mqt/Dialect/QAssert/IR/QAssertDialect.h"
+ #include "mqt/Dialect/QC/IR/QCDialect.h"
+ #include "mqt/Dialect/QC/IR/QCInterfaces.h"
+ #include "mqt/Dialect/QC/IR/QCOps.h"
+@@ -81,7 +82,8 @@ static void ensureInlinerExtensions(MLIRContext* context) {
+ std::shared_ptr<MLIRContext> createCompilerContext() {
+   DialectRegistry registry;
+   registry.insert<cbit::CBitDialect, mqt::MQTDialect, qc::QCDialect,
+-                  qco::QCODialect, qtensor::QTensorDialect, arith::ArithDialect,
++                  qco::QCODialect, qassert::QAssertDialect,
++                  qtensor::QTensorDialect, arith::ArithDialect,
+                   cf::ControlFlowDialect, func::FuncDialect, math::MathDialect,
+                   scf::SCFDialect, LLVM::LLVMDialect, memref::MemRefDialect,
+                   tensor::TensorDialect, jeff::JeffDialect,
